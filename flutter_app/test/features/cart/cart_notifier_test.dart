@@ -43,6 +43,28 @@ void main() {
     expect(cart.totalAmount, 30);
   });
 
+  test('productCount cuenta productos distintos y totalQuantity cuenta unidades', () {
+    notifier()
+      ..add(buildProduct(id: 1))
+      ..add(buildProduct(id: 2))
+      ..add(buildProduct(id: 2));
+
+    final cart = container.read(cartProvider);
+    expect(cart.productCount, 2);
+    expect(cart.totalQuantity, 3);
+  });
+
+  test('contains sabe qué productos ya están en el carrito', () {
+    notifier().add(buildProduct(id: 1));
+
+    expect(container.read(cartProvider).contains(1), isTrue);
+    expect(container.read(cartProvider).contains(2), isFalse);
+
+    notifier().remove(1);
+
+    expect(container.read(cartProvider).contains(1), isFalse);
+  });
+
   test('cambiar la cantidad a cero elimina el producto', () {
     notifier()
       ..add(buildProduct(id: 1))

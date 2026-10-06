@@ -9,14 +9,14 @@ class CartBadgeButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final quantity = ref.watch(cartProvider.select((cart) => cart.totalQuantity));
+    final products = ref.watch(cartProvider.select((cart) => cart.productCount));
 
     return IconButton(
       tooltip: 'Ver carrito',
       onPressed: () => context.push('/cart'),
       icon: Badge(
-        isLabelVisible: quantity > 0,
-        label: Text('$quantity'),
+        isLabelVisible: products > 0,
+        label: Text('$products'),
         child: const Icon(Icons.shopping_cart_outlined),
       ),
     );

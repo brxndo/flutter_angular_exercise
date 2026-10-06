@@ -17,9 +17,11 @@ class ProductCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final isInCart = ref.watch(cartProvider.select((cart) => cart.contains(product.id)));
 
     return Card(
       margin: const EdgeInsets.only(bottom: UiConstants.spacing),
+      color: isInCart ? theme.colorScheme.secondaryContainer : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => context.push('/product/${product.id}'),
@@ -52,8 +54,10 @@ class ProductCard extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Agregar al carrito',
-                icon: const Icon(Icons.add_shopping_cart_outlined),
+                tooltip: isInCart ? 'Agregar otra unidad' : 'Agregar al carrito',
+                icon: Icon(
+                  isInCart ? Icons.shopping_cart : Icons.add_shopping_cart_outlined,
+                ),
                 onPressed: () => _addToCart(context, ref),
               ),
             ],

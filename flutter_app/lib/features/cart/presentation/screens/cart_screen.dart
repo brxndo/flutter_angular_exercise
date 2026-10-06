@@ -34,15 +34,24 @@ class CartScreen extends ConsumerWidget {
             ),
       bottomNavigationBar: cart.isEmpty
           ? null
-          : _CartSummary(quantity: cart.totalQuantity, amount: cart.totalAmount),
+          : _CartSummary(
+              products: cart.productCount,
+              units: cart.totalQuantity,
+              amount: cart.totalAmount,
+            ),
     );
   }
 }
 
 class _CartSummary extends StatelessWidget {
-  const _CartSummary({required this.quantity, required this.amount});
+  const _CartSummary({
+    required this.products,
+    required this.units,
+    required this.amount,
+  });
 
-  final int quantity;
+  final int products;
+  final int units;
   final double amount;
 
   @override
@@ -53,9 +62,14 @@ class _CartSummary extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(UiConstants.spacing * 2),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('$quantity ${quantity == 1 ? 'producto' : 'productos'}'),
+            Expanded(
+              child: Text(
+                '${pluralize(products, 'producto', 'productos')} · '
+                '${pluralize(units, 'unidad', 'unidades')}',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
             Text(
               formatPrice(amount),
               style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),

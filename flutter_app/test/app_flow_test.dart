@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Carrito'), findsOneWidget);
-    expect(find.text('1 producto'), findsOneWidget);
+    expect(find.text('1 producto · 1 unidad'), findsOneWidget);
     expect(find.text('\$20.00'), findsOneWidget);
   });
 }

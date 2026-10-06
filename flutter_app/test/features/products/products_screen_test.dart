@@ -110,4 +110,67 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('el contador cuenta productos distintos, no unidades', (tester) async {
+    await tester.pumpWidget(
+      buildScreen(
+        FakeProductRepository(
+          total: 2,
+          pages: {
+            0: [
+              buildProduct(id: 1, title: 'Producto A'),
+              buildProduct(id: 2, title: 'Producto B'),
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Finder badgeWith(String label) =>
+        find.descendant(of: find.byType(Badge), matching: find.text(label));
+
+    await tester.tap(find.byTooltip('Agregar al carrito').first);
+    await tester.pump();
+    await tester.tap(find.byTooltip('Agregar otra unidad'));
+    await tester.pump();
+
+    expect(badgeWith('1'), findsOneWidget);
+    expect(badgeWith('2'), findsNothing);
+
+    await tester.tap(find.byTooltip('Agregar al carrito'));
+    await tester.pump();
+
+    expect(badgeWith('2'), findsOneWidget);
+  });
+
+  testWidgets('la card cambia de color cuando el producto ya está en el carrito',
+      (tester) async {
+    await tester.pumpWidget(
+      buildScreen(
+        FakeProductRepository(
+          total: 2,
+          pages: {
+            0: [
+              buildProduct(id: 1, title: 'Producto A'),
+              buildProduct(id: 2, title: 'Producto B'),
+            ],
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Color? colorOfCard(int index) =>
+        tester.widget<Card>(find.byType(Card).at(index)).color;
+
+    expect(colorOfCard(0), isNull);
+    expect(colorOfCard(1), isNull);
+
+    await tester.tap(find.byTooltip('Agregar al carrito').first);
+    await tester.pump();
+
+    expect(colorOfCard(0), isNotNull);
+    expect(colorOfCard(1), isNull);
+  });
 }
