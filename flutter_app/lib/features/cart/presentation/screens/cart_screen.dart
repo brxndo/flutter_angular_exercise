@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../../core/constants/ui_constants.dart';
 import '../../../../core/utils/formatters.dart';
@@ -22,15 +23,20 @@ class CartScreen extends ConsumerWidget {
             IconButton(
               tooltip: 'Vaciar carrito',
               icon: const Icon(Icons.remove_shopping_cart_outlined),
-              onPressed: ref.read(cartProvider.notifier).clear,
+              onPressed: () => _confirmClear(context, ref),
             ),
         ],
       ),
       body: cart.isEmpty
           ? const EmptyView(message: 'Todavía no agregaste productos')
-          : ListView.builder(
-              itemCount: cart.items.length,
-              itemBuilder: (context, index) => CartItemTile(item: cart.items[index]),
+          : SlidableAutoCloseBehavior(
+              child: ListView.builder(
+                itemCount: cart.items.length,
+                itemBuilder: (context, index) {
+                  final item = cart.items[index];
+                  return CartItemTile(key: ValueKey(item.productId), item: item);
+                },
+              ),
             ),
       bottomNavigationBar: cart.isEmpty
           ? null
@@ -40,6 +46,34 @@ class CartScreen extends ConsumerWidget {
               amount: cart.totalAmount,
             ),
     );
+  }
+
+  Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+    final notifier = ref.read(cartProvider.notifier);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Vaciar carrito'),
+        content: const Text(
+          'Se van a quitar todos los productos del carrito. ¿Querés continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Vaciar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      notifier.clear();
+    }
   }
 }
 

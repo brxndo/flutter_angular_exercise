@@ -25,7 +25,7 @@ Product buildProduct({
     discountPercentage: discountPercentage,
     rating: rating,
     stock: stock,
-    thumbnail: 'https://cdn.dummyjson.com/$id.webp',
+    thumbnail: '',
   );
 }
 

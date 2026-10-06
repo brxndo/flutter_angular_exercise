@@ -23,7 +23,7 @@ class ProductDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalle'),
+        title: const Text('Detalle del producto'),
         actions: const [CartBadgeButton()],
       ),
       body: product.when(
@@ -63,7 +63,9 @@ class _ProductDetail extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           product.brand ?? product.category,
-          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
         ),
         const SizedBox(height: UiConstants.spacing),
         Row(

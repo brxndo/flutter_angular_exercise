@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../../core/constants/ui_constants.dart';
 import '../../../../core/utils/formatters.dart';
@@ -14,36 +15,48 @@ class CartItemTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final notifier = ref.read(cartProvider.notifier);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: UiConstants.spacing,
-        vertical: 4,
-      ),
-      leading: NetworkThumbnail(url: item.thumbnail, width: 56, height: 56),
-      title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-      subtitle: Text('${formatPrice(item.price)} c/u'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Slidable(
+      key: ValueKey(item.productId),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: UiConstants.slideActionExtent,
         children: [
-          IconButton(
-            tooltip: 'Quitar uno',
-            icon: const Icon(Icons.remove_circle_outline),
-            onPressed: () => notifier.updateQuantity(item.productId, item.quantity - 1),
-          ),
-          Text('${item.quantity}'),
-          IconButton(
-            tooltip: 'Agregar uno',
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: () => notifier.updateQuantity(item.productId, item.quantity + 1),
-          ),
-          IconButton(
-            tooltip: 'Eliminar del carrito',
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () => notifier.remove(item.productId),
+          SlidableAction(
+            onPressed: (context) => notifier.remove(item.productId),
+            backgroundColor: theme.colorScheme.errorContainer,
+            foregroundColor: theme.colorScheme.onErrorContainer,
+            icon: Icons.delete_outline,
+            label: 'Eliminar',
           ),
         ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: UiConstants.spacing,
+          vertical: 4,
+        ),
+        leading: NetworkThumbnail(url: item.thumbnail, width: 56, height: 56),
+        title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text('${formatPrice(item.price)} c/u'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Quitar uno',
+              icon: const Icon(Icons.remove_circle_outline),
+              onPressed: () => notifier.updateQuantity(item.productId, item.quantity - 1),
+            ),
+            Text('${item.quantity}'),
+            IconButton(
+              tooltip: 'Agregar uno',
+              icon: const Icon(Icons.add_circle_outline),
+              onPressed: () => notifier.updateQuantity(item.productId, item.quantity + 1),
+            ),
+          ],
+        ),
       ),
     );
   }
