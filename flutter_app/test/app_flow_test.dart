@@ -34,7 +34,7 @@ void main() {
     await tester.tap(find.text('Mascara Essence'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Detalle'), findsOneWidget);
+    expect(find.text('Detalle del producto'), findsOneWidget);
     expect(find.text('Disponible (7 en stock)'), findsOneWidget);
 
     await tester.tap(find.text('Agregar al carrito'));
