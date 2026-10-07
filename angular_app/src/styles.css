@@ -1,3 +1,14 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+@theme {
+  --color-brand-50: oklch(96.2% 0.018 272);
+  --color-brand-100: oklch(93% 0.035 272);
+  --color-brand-200: oklch(87% 0.06 272);
+  --color-brand-500: oklch(52% 0.148 272);
+  --color-brand-600: oklch(46% 0.145 272);
+  --color-brand-700: oklch(40% 0.13 272);
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
