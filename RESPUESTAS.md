@@ -56,6 +56,7 @@ El 'autoDispose' permite eliminar el estado de un provider cuando no tiene liste
 Lo hace a traves metodos como .when() o coincidencia de patrones, los cuales permite gestionar cada estado de forma segura.
 
 Ej:
+```dart
   const UsuariosPage({super.key});
 
   @override
@@ -81,6 +82,7 @@ Ej:
       },
     );
   }
+```
 
 **11. ¿Cómo sobrescribirías un provider en un test para inyectar un repositorio falso?**
 
@@ -127,3 +129,198 @@ En que todas depende sobre que parte aplicación de está probando y cuanto del 
 - Uso palabras clave como 'feature', 'fix', 'refactor' junto con mensajes cortos indicativos de las acciones realizadas.
 - Intento que cada cambio sea commiteado y que refleje un valor de lo que se ha realizado.
 - Reviso que todo este funcional, verificando la compilacion del codigo y que no existan errores o codigo innecesario.
+
+
+---------------
+
+**PARTE 4**
+
+**Fragmento A — Flutter / Riverpod**
+
+**1. La llamada a la API esta adentro del build()**
+
+El build() se ejecuta cada vez que el widget se reconstruye, asi que cada respuesta llama a setState, setState vuelve a construir, y eso dispara otra llamada.
+
+
+Lo sacaria del build y lo pondria en un FutureProvider, para que riverpod lo ejecute una sola vez y lo cachee.
+
+**2. El carrito se modifica con add() sobre la lista que ya esta adentro del provider**
+
+ref.read(cartProvider).add(p) agrega el producto a la misma lista de siempre. Riverpod compara el estado anterior con el nuevo para saber si tiene que avisar, y como es la misma lista no ve ningun cambio. El producto entra pero la pantalla no se entera.
+
+En vez de modificar la lista crearia una nueva: state = [...state, product]. Y lo meteria en un Notifier con un metodo add(), asi la pantalla no sabe como se guarda.
+
+
+**3. No hay tipos, solo hay List y Map**
+
+p['title'] puede devolver cualquier cosa y a la app no le importa. Si la API renombra un campo o manda un numero donde habia texto, la app revienta recien cuando el usuario toca esa pantalla, y el error aparece lejos de donde esta el problema real.
+
+Le armaria una clase Product con un fromJson que haga la conversion en un solo lugar. Si algo viene distinto, falla ahi y se entiende por que.
+
+**4. Falta controlar el error por si la API falla**
+
+No se revisa el codigo de respuesta ni se captura ningun error. Sin internet el usuario solo verias el CircularProgressIndicator simulando que se colgó la pagina.
+
+El AsyncValue ya trae los tres estados y con .when() se dibuja carga, error y datos. En el error pondria el mensaje y un boton de reintentar.
+
+
+**5. El ListView construye todos los productos de una sola**
+
+Con .map().toList() se arman los 100 ListTile aunque entren 8 en pantalla, lo cual con este endpoint casi no se nota, pero si despues son 2000 productos, la app se tardaria en abrir.
+
+Con ListView.builder construye solo lo que se ve.
+
+**6. Mensaje de exito**
+
+El print('agregado') no funciona en produccion y encima el usuario no recibe ninguna confirmacion de que el producto se agregó al carrito; esto lo cambiaria por un SnackBar.
+
+**Fragmento B — Angular**
+
+**1. El setInterval nunca se cancela**
+
+Cuando el usuario sale de la pantalla el componente se destruye, pero el intervalo sigue vivo pidiendo a la API cada 5 segundos, es decir sii entra y sale diez veces quedan diez intervalos corriendo a la vez, cada uno escribiendo sobre un componente que ya no existe. Es una fuga de memoria y ademas gasto de datos.
+
+Usaria el interval() de RxJS junto con takeUntilDestroyed(), que corta solo cuando el componente se va.
+
+**2. El subscribe nunca se limpia**
+
+Mismo problema que arriba pero con la suscripcion. Cada vuelta del intervalo abre una nueva y ninguna se cierra. Lo armaria como un solo stream y lo mostraria con el pipe async en el template, que se desuscribe solo.
+
+**3. Pide de nuevo cada 5 segundos sin esperar a que termine la anterior**
+
+Si la API tarda 6 segundos, la llamada nueva sale antes de que la anterior termine y las respuestas pueden llegar desordenadas, por lo que el usuario vería datos viejos sobre los nuevos.
+
+Con switchMap la llamada anterior se cancela sola cuando arranca la siguiente.
+
+**4. No hay datos tipados: orders: any y (r: any)**
+
+El any es una mala practicas ya que Typescript no revisa si estos esta mal y lo pasa por alto..
+
+Pondria un interface Order y tiparia la llamada: this.http.get<CartsResponse>(...).
+
+**5. El componente llama a HttpClient directo**
+
+No existe separacion de modulos, componente y servicios 
+
+Lo moveria a un servicio con providedIn: 'root' y el componente solo lo pide.
+
+
+**6. No hay estado de carga ni de error**
+
+El problema es que los primeros 5 segundos la pantalla quedan en blanco, porque el intervalo recien dispara la primera llamada cuando se cumple el tiempo, pero si la llamada falla no se muestra nada.
+
+Se pediría los datos en el metodo ngOnInit y mostraria un mensaje mientras carga y otro si algo falla.
+
+**Fragmento A corregido**
+
+```dart
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+
+class Product {
+  const Product({required this.id, required this.title, required this.price});
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'] as int,
+      title: json['title'] as String,
+      price: (json['price'] as num).toDouble(),
+    );
+  }
+
+  final int id;
+  final String title;
+  final double price;
+}
+
+final productsProvider = FutureProvider<List<Product>>((ref) async {
+  final response = await http.get(Uri.parse('https://dummyjson.com/products'));
+
+  if (response.statusCode != 200) {
+    throw Exception('El servidor respondió ${response.statusCode}');
+  }
+
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+  return (body['products'] as List<dynamic>)
+      .map((item) => Product.fromJson(item as Map<String, dynamic>))
+      .toList();
+});
+
+class CartNotifier extends Notifier<List<Product>> {
+  @override
+  List<Product> build() => const [];
+
+  void add(Product product) => state = [...state, product];
+}
+
+final cartProvider = NotifierProvider<CartNotifier, List<Product>>(
+  CartNotifier.new,
+);
+
+class ProductsScreen extends ConsumerWidget {
+  const ProductsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final products = ref.watch(productsProvider);
+    final cart = ref.watch(cartProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Productos (${cart.length})')),
+      body: products.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => _ErrorView(
+          message: '$error',
+          onRetry: () => ref.invalidate(productsProvider),
+        ),
+        data: (items) => ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final product = items[index];
+
+            return ListTile(
+              title: Text(product.title),
+              subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+              onTap: () => _addToCart(context, ref, product),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _addToCart(BuildContext context, WidgetRef ref, Product product) {
+    ref.read(cartProvider.notifier).add(product);
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text('${product.title} agregado')));
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
+        ],
+      ),
+    );
+  }
+}
+```
+
