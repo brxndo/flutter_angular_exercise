@@ -1,0 +1,92 @@
+<section class="flex flex-col gap-6">
+  <a routerLink="/orders" class="text-sm font-medium text-brand-700 hover:underline">
+    ← Volver al panel
+  </a>
+
+  @if (state$ | async; as state) {
+    @switch (state.status) {
+      @case ('loading') {
+        <div class="h-80 animate-pulse rounded-xl border border-slate-200 bg-white"></div>
+      }
+
+      @case ('error') {
+        <app-status-message title="No pudimos cargar el pedido" [detail]="state.message" />
+      }
+
+      @case ('ready') {
+        @let order = state.data;
+
+        <header class="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-semibold text-slate-900">Pedido #{{ order.id }}</h2>
+            <p class="text-sm text-slate-500">
+              @if (order.userName; as name) {
+                {{ name }} · Usuario #{{ order.userId }}
+              } @else {
+                Usuario #{{ order.userId }}
+              }
+            </p>
+          </div>
+
+          <dl class="flex gap-8 text-right">
+            <div>
+              <dt class="text-xs tracking-wide text-slate-500 uppercase">Subtotal</dt>
+              <dd class="text-base text-slate-700">{{ order.total | money }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs tracking-wide text-slate-500 uppercase">Ahorro</dt>
+              <dd class="text-base text-emerald-700">
+                {{ order.savings | money }} ({{ order.discountRate | percent: '1.0-1' }})
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs tracking-wide text-slate-500 uppercase">Total</dt>
+              <dd class="text-xl font-semibold text-slate-900">
+                {{ order.discountedTotal | money }}
+              </dd>
+            </div>
+          </dl>
+        </header>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table class="w-full text-sm">
+            <thead class="border-b border-slate-200 text-left text-slate-500">
+              <tr>
+                <th class="px-5 py-3 font-medium">Producto</th>
+                <th class="px-5 py-3 text-right font-medium">Precio</th>
+                <th class="px-5 py-3 text-right font-medium">Cantidad</th>
+                <th class="px-5 py-3 text-right font-medium">Descuento</th>
+                <th class="px-5 py-3 text-right font-medium">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (product of order.products; track product.id) {
+                <tr>
+                  <td class="px-5 py-3">
+                    <div class="flex items-center gap-3">
+                      <img
+                        [src]="product.thumbnail"
+                        [alt]="product.title"
+                        loading="lazy"
+                        class="size-10 rounded-lg bg-slate-100 object-cover"
+                      />
+                      <span class="font-medium text-slate-800">{{ product.title }}</span>
+                    </div>
+                  </td>
+                  <td class="px-5 py-3 text-right text-slate-600">{{ product.price | money }}</td>
+                  <td class="px-5 py-3 text-right text-slate-600">{{ product.quantity }}</td>
+                  <td class="px-5 py-3 text-right text-emerald-700">
+                    -{{ product.discountPercentage / 100 | percent: '1.0-1' }}
+                  </td>
+                  <td class="px-5 py-3 text-right font-medium text-slate-900">
+                    {{ product.discountedTotal | money }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
+</section>

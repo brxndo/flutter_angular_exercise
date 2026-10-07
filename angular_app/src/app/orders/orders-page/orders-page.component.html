@@ -1,0 +1,50 @@
+<section class="flex flex-col gap-6">
+  <app-orders-filter [users]="users()" (filterChange)="onFilterChange($event)" />
+
+  @let current = state();
+
+  @switch (current.status) {
+    @case ('loading') {
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        @for (skeleton of skeletons; track skeleton) {
+          <div class="h-64 animate-pulse rounded-xl border border-slate-200 bg-white"></div>
+        }
+      </div>
+    }
+
+    @case ('error') {
+      <app-status-message
+        title="No pudimos cargar los pedidos"
+        [detail]="current.message"
+        actionLabel="Reintentar"
+        (action)="reload()"
+      />
+    }
+
+    @case ('ready') {
+      @if (current.data.fetched > current.data.orders.length) {
+        <p class="text-sm text-slate-500">
+          El filtro por total mínimo ocultó
+          {{ current.data.fetched - current.data.orders.length }} de los
+          {{ current.data.fetched }} pedidos de esta página.
+        </p>
+      }
+
+      @if (current.data.orders.length === 0) {
+        <app-status-message title="No hay pedidos en esta página" />
+      } @else {
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          @for (order of current.data.orders; track order.id) {
+            <app-order-card [order]="order" (viewDetail)="openDetail($event)" />
+          }
+        </div>
+      }
+
+      <app-paginator
+        [page]="currentPage()"
+        [total]="current.data.total"
+        (pageChange)="onPageChange($event)"
+      />
+    }
+  }
+</section>
