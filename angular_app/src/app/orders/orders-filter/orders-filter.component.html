@@ -1,0 +1,38 @@
+<form
+  [formGroup]="form"
+  class="flex flex-wrap items-end gap-4 rounded-xl border border-slate-200 bg-white p-5"
+>
+  <label class="flex flex-col gap-1.5">
+    <span class="text-xs font-medium tracking-wide text-slate-500 uppercase">Usuario</span>
+    <select
+      formControlName="userId"
+      class="w-56 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+    >
+      <option [ngValue]="null">Todos</option>
+      @for (user of users(); track user.id) {
+        <option [ngValue]="user.id">{{ user.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1.5">
+    <span class="text-xs font-medium tracking-wide text-slate-500 uppercase">Total mínimo</span>
+    <input
+      type="number"
+      min="0"
+      step="100"
+      inputmode="decimal"
+      placeholder="Sin mínimo"
+      formControlName="minTotal"
+      class="w-40 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+    />
+  </label>
+
+  <button
+    type="button"
+    class="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+    (click)="clear()"
+  >
+    Limpiar
+  </button>
+</form>

@@ -1,0 +1,25 @@
+<nav class="flex flex-wrap items-center justify-between gap-4">
+  <p class="text-sm text-slate-500">Mostrando {{ from() }}-{{ to() }} de {{ total() }} pedidos</p>
+
+  <div class="flex items-center gap-2">
+    <button
+      type="button"
+      class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition enabled:hover:bg-slate-100 disabled:opacity-40"
+      [disabled]="!canGoBack()"
+      (click)="go(-1)"
+    >
+      Anterior
+    </button>
+
+    <span class="px-2 text-sm text-slate-600">{{ page() }} / {{ totalPages() }}</span>
+
+    <button
+      type="button"
+      class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition enabled:hover:bg-slate-100 disabled:opacity-40"
+      [disabled]="!canGoForward()"
+      (click)="go(1)"
+    >
+      Siguiente
+    </button>
+  </div>
+</nav>
